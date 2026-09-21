@@ -1,0 +1,19 @@
+numpy==1.23.5
+scipy==1.10.1
+trimesh==4.5.2
+networkx==3.2.1
+shapely==2.0.7
+pathfinding==1.0.16
+plyfile==1.0.3
+triangle==20250106
+Pillow==10.4.0
+matplotlib==3.7.5
+h5py==3.11.0
+smplx==0.1.28
+chumpy==0.70
+tqdm==4.67.1
+ftfy==6.2.3
+regex==2024.11.6
+gdown==5.2.0
+filelock==3.16.1
+clip @ git+https://github.com/openai/CLIP.git@d05afc436d78f1c48dc0dbf8e5980a9d471f35f6

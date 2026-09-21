@@ -1,0 +1,17 @@
+# Add this group for live room/task generation; replay needs only requirements.txt.
+openai==0.27.6
+langchain==0.0.171
+pydantic==1.10.19
+open-clip-torch==2.29.0
+sentence-transformers==3.3.1
+transformers==4.46.3
+objathor==0.0.7
+Werkzeug==2.0.1
+Flask==2.0.1
+Jinja2==3.1.6
+compress-json==1.1.0
+compress-pickle==2.1.0
+colorama==0.4.6
+editdistance==0.8.1
+procthor
+rtree

@@ -1,0 +1,18 @@
+{
+  "filename": "WaveVerse-HMG-checkpoints.zip",
+  "sha256": "43bb57080b180dbef7d0620ee2f7d62f0af725be4e2ab559240fba07513024af",
+  "files": {
+    "pretrained/WaveVerse-HMG/net_best_fid.pth": {
+      "sha256": "3d136caaa60fe025564c1a9972f3e6ab9d7b0829f2995c4f4096353b70191d58",
+      "bytes": 106081224
+    },
+    "pretrained/VQVAE/net_last.pth": {
+      "sha256": "34e88e36673014f52d4f792f89eeea57120d41e8877970ff3e85cca184b7218c",
+      "bytes": 78816589
+    },
+    "checkpoints/t2m/text_mot_match/model/finest.tar": {
+      "sha256": "e7ae3d0d2f9eb77cda68963badc9b851cd7d496adb6536e1acedee764b1c6b60",
+      "bytes": 86774808
+    }
+  }
+}

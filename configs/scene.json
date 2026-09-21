@@ -1,0 +1,91 @@
+{
+  "_comments": {
+    "llm_model": "Chat model used for room and task generation.",
+    "task_count": "Number of independent human motion sequences per room.",
+    "resolution": "Path-planning grid spacing in metres.",
+    "agent_radius": "Clearance radius used by the path planner, in metres.",
+    "in_place_path_length_m": "Short conditioning path length for in-place actions, in metres.",
+    "seed": "Initial random seed; retries use different seeds.",
+    "categorical": "true samples motion tokens; false selects the most likely token.",
+    "smpl_iterations": "Number of SMPL fitting optimization iterations.",
+    "holodeck_python / motion_python / mesh_python": "Optional interpreter paths for each stage; null uses the current interpreter.",
+    "motion_safety": {
+      "enabled": "Check joints and fitted meshes, try small placement repairs, then regenerate human tasks and motions in the same room if needed.",
+      "clearance_m": "Extra clearance around the body, in metres.",
+      "contact_tolerance_m": "Overlap depth above which a frame counts as colliding, in metres.",
+      "max_penetration_m": "Maximum allowed overlap with conservative scene collision bounds, in metres.",
+      "max_collision_frame_fraction": "Maximum fraction of frames allowed above the contact tolerance; range 0 to 1.",
+      "max_shift_m": "Maximum total horizontal placement adjustment per motion, including diagonal shifts, in metres.",
+      "shift_step_m": "Spacing between candidate placement adjustments, in metres.",
+      "floor_tolerance_m": "Allowed floor penetration before collision thresholds apply, in metres.",
+      "max_locomotion_foot_height_m": "Height above which both feet count as airborne during grounded locomotion, in metres.",
+      "max_locomotion_air_time_s": "Maximum consecutive airborne time during grounded locomotion, in seconds; jumping is excluded.",
+      "min_spin_rotation_degrees": "Minimum body rotation required for actions described as spins.",
+      "max_attempts": "Total attempts, including the first. Retries need the API key. Set to 1 for offline runs with supplied tasks; exhaustion reports Motion generation failed."
+    },
+    "radio_materials": {
+      "material_column": "Saved assignment column: extended_mat or builtin_mat.",
+      "object_overrides": "Optional mapping from exported shape IDs to RF material names."
+    }
+  },
+  "scene_assets": {
+    "objaverse": "assets/objathor/2023_09_23/assets",
+    "procthor": "assets/procthor",
+    "doors": "assets/doors",
+    "windows": "assets/windows",
+    "holodeck_base": "assets/objathor"
+  },
+  "motion_assets": {
+    "vq": "assets/pretrained/VQVAE/net_last.pth",
+    "transformer": "assets/pretrained/WaveVerse-HMG/net_best_fid.pth",
+    "mean": "resources/hmg/mean.npy",
+    "std": "resources/hmg/std.npy"
+  },
+  "mesh_assets": {
+    "body_models": "assets/body_models",
+    "prior": "assets/smplify",
+    "segmentation": "resources/smpl_vert_segmentation.json"
+  },
+  "llm_model": "gpt-4o-2024-05-13",
+  "task_count": 1,
+  "single_room": true,
+  "resolution": 0.05,
+  "agent_radius": 0.2,
+  "in_place_path_length_m": 0.2,
+  "seed": 123,
+  "categorical": false,
+  "device": "cuda:0",
+  "show_ceiling": true,
+  "smpl_iterations": 100,
+  "holodeck_python": null,
+  "motion_python": null,
+  "mesh_python": null,
+  "motion_safety": {
+    "enabled": true,
+    "clearance_m": 0.02,
+    "contact_tolerance_m": 0.005,
+    "max_penetration_m": 0.02,
+    "max_collision_frame_fraction": 0.01,
+    "max_shift_m": 0.30,
+    "shift_step_m": 0.05,
+    "limb_radius_m": 0.08,
+    "torso_radius_m": 0.16,
+    "head_radius_m": 0.12,
+    "sample_spacing_m": 0.04,
+    "temporal_spacing_m": 0.05,
+    "floor_tolerance_m": 0.025,
+    "max_locomotion_foot_height_m": 0.30,
+    "max_locomotion_air_time_s": 0.40,
+    "min_spin_rotation_degrees": 120.0,
+    "max_attempts": 10
+  },
+  "radio_materials": {
+    "frequency_hz": 77000000000,
+    "scattering_coefficient": 0.0,
+    "database": "resources/asset_wall_floor_ceiling_material_database.csv",
+    "material_column": "extended_mat",
+    "door_seed": 42,
+    "human_material": "fabric",
+    "object_overrides": {}
+  }
+}

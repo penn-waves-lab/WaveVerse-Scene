@@ -1,0 +1,377 @@
+{
+  "schema_version": 1,
+  "source": "WaveVerse patched Sionna 0.19.2, itu_materials.py extended_itu_materials_properties; vacuum added analytically",
+  "equations": "epsilon_r = a * (f / 1 GHz)^b; sigma_S_per_m = c * (f / 1 GHz)^d",
+  "materials": {
+    "itu_plastic": {
+      "frequency_ranges_ghz": [
+        {
+          "min": 1.0,
+          "max": 100.0,
+          "coefficients": [
+            2.4,
+            0.0,
+            0.002,
+            1.1
+          ]
+        }
+      ]
+    },
+    "itu_fabric": {
+      "frequency_ranges_ghz": [
+        {
+          "min": 1.0,
+          "max": 100.0,
+          "coefficients": [
+            1.8,
+            0.0,
+            0.0015,
+            1.2
+          ]
+        }
+      ]
+    },
+    "itu_leather": {
+      "frequency_ranges_ghz": [
+        {
+          "min": 1.0,
+          "max": 100.0,
+          "coefficients": [
+            2.1,
+            0.0,
+            0.003,
+            1.1
+          ]
+        }
+      ]
+    },
+    "itu_carpet": {
+      "frequency_ranges_ghz": [
+        {
+          "min": 1.0,
+          "max": 100.0,
+          "coefficients": [
+            1.5,
+            0.0,
+            0.001,
+            1.3
+          ]
+        }
+      ]
+    },
+    "itu_paper": {
+      "frequency_ranges_ghz": [
+        {
+          "min": 1.0,
+          "max": 100.0,
+          "coefficients": [
+            2.0,
+            0.0,
+            0.0025,
+            1.15
+          ]
+        }
+      ]
+    },
+    "itu_rubber": {
+      "frequency_ranges_ghz": [
+        {
+          "min": 1.0,
+          "max": 100.0,
+          "coefficients": [
+            2.8,
+            0.0,
+            0.004,
+            1.2
+          ]
+        }
+      ]
+    },
+    "itu_wax": {
+      "frequency_ranges_ghz": [
+        {
+          "min": 1.0,
+          "max": 100.0,
+          "coefficients": [
+            2.2,
+            0.0,
+            0.001,
+            1.0
+          ]
+        }
+      ]
+    },
+    "itu_wicker": {
+      "frequency_ranges_ghz": [
+        {
+          "min": 1.0,
+          "max": 100.0,
+          "coefficients": [
+            1.85,
+            0.0,
+            0.003,
+            1.1
+          ]
+        }
+      ]
+    },
+    "itu_ceramic": {
+      "frequency_ranges_ghz": [
+        {
+          "min": 1.0,
+          "max": 100.0,
+          "coefficients": [
+            8.5,
+            0.0,
+            0.015,
+            1.2
+          ]
+        }
+      ]
+    },
+    "itu_food": {
+      "frequency_ranges_ghz": [
+        {
+          "min": 1.0,
+          "max": 100.0,
+          "coefficients": [
+            4.5,
+            0.0,
+            0.03,
+            1.4
+          ]
+        }
+      ]
+    },
+    "itu_concrete_ex": {
+      "frequency_ranges_ghz": [
+        {
+          "min": 1.0,
+          "max": 100.0,
+          "coefficients": [
+            5.24,
+            0.0,
+            0.0462,
+            0.7822
+          ]
+        }
+      ]
+    },
+    "itu_brick_ex": {
+      "frequency_ranges_ghz": [
+        {
+          "min": 1.0,
+          "max": 100.0,
+          "coefficients": [
+            3.91,
+            0.0,
+            0.0238,
+            0.16
+          ]
+        }
+      ]
+    },
+    "itu_plasterboard_ex": {
+      "frequency_ranges_ghz": [
+        {
+          "min": 1.0,
+          "max": 100.0,
+          "coefficients": [
+            2.73,
+            0.0,
+            0.0085,
+            0.9395
+          ]
+        }
+      ]
+    },
+    "itu_wood_ex": {
+      "frequency_ranges_ghz": [
+        {
+          "min": 0.001,
+          "max": 100.0,
+          "coefficients": [
+            1.99,
+            0.0,
+            0.0047,
+            1.0718
+          ]
+        }
+      ]
+    },
+    "itu_glass_ex": {
+      "frequency_ranges_ghz": [
+        {
+          "min": 0.1,
+          "max": 100.0,
+          "coefficients": [
+            6.31,
+            0.0,
+            0.0036,
+            1.3394
+          ]
+        },
+        {
+          "min": 220.0,
+          "max": 450.0,
+          "coefficients": [
+            5.79,
+            0.0,
+            0.0004,
+            1.658
+          ]
+        }
+      ]
+    },
+    "itu_ceiling_board_ex": {
+      "frequency_ranges_ghz": [
+        {
+          "min": 1.0,
+          "max": 100.0,
+          "coefficients": [
+            1.48,
+            0.0,
+            0.0011,
+            1.075
+          ]
+        },
+        {
+          "min": 220.0,
+          "max": 450.0,
+          "coefficients": [
+            1.52,
+            0.0,
+            0.0029,
+            1.029
+          ]
+        }
+      ]
+    },
+    "itu_chipboard_ex": {
+      "frequency_ranges_ghz": [
+        {
+          "min": 1.0,
+          "max": 100.0,
+          "coefficients": [
+            2.58,
+            0.0,
+            0.0217,
+            0.78
+          ]
+        }
+      ]
+    },
+    "itu_plywood_ex": {
+      "frequency_ranges_ghz": [
+        {
+          "min": 1.0,
+          "max": 100.0,
+          "coefficients": [
+            2.71,
+            0.0,
+            0.33,
+            0.0
+          ]
+        }
+      ]
+    },
+    "itu_marble_ex": {
+      "frequency_ranges_ghz": [
+        {
+          "min": 1.0,
+          "max": 100.0,
+          "coefficients": [
+            7.074,
+            0.0,
+            0.0055,
+            0.9262
+          ]
+        }
+      ]
+    },
+    "itu_floorboard_ex": {
+      "frequency_ranges_ghz": [
+        {
+          "min": 1.0,
+          "max": 100.0,
+          "coefficients": [
+            3.66,
+            0.0,
+            0.0044,
+            1.3515
+          ]
+        }
+      ]
+    },
+    "itu_metal_ex": {
+      "frequency_ranges_ghz": [
+        {
+          "min": 1.0,
+          "max": 100.0,
+          "coefficients": [
+            1.0,
+            0.0,
+            10000000.0,
+            0.0
+          ]
+        }
+      ]
+    },
+    "itu_very_dry_ground_ex": {
+      "frequency_ranges_ghz": [
+        {
+          "min": 1.0,
+          "max": 100.0,
+          "coefficients": [
+            3.0,
+            0.0,
+            0.00015,
+            2.52
+          ]
+        }
+      ]
+    },
+    "itu_medium_dry_ground_ex": {
+      "frequency_ranges_ghz": [
+        {
+          "min": 1.0,
+          "max": 100.0,
+          "coefficients": [
+            15.0,
+            -0.1,
+            0.035,
+            1.63
+          ]
+        }
+      ]
+    },
+    "itu_wet_ground_ex": {
+      "frequency_ranges_ghz": [
+        {
+          "min": 1.0,
+          "max": 100.0,
+          "coefficients": [
+            30.0,
+            -0.4,
+            0.15,
+            1.3
+          ]
+        }
+      ]
+    },
+    "itu_vacuum": {
+      "frequency_ranges_ghz": [
+        {
+          "min": 0.001,
+          "max": 450.0,
+          "coefficients": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      ]
+    }
+  }
+}

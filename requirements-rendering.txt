@@ -1,0 +1,4 @@
+# Optional GPU posters and MP4s; the offline WebGL viewer uses requirements.txt.
+pyrender==0.1.45
+# Newer Open3D releases conflict with AI2-THOR's Werkzeug requirement.
+open3d==0.16.0

@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>__SCENE_TITLE__ · WaveVerse motion</title>
+<style>
+*{box-sizing:border-box}[hidden]{display:none!important}body{margin:0;background:#eef2f5;color:#23364a;font:15px system-ui,sans-serif}
+header{padding:16px 24px;background:white;border-bottom:1px solid #d3dde5}h1{font-size:21px;margin:4px 0 8px}a{color:#286784}
+.toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:10px 0}button,select{font:inherit;border:1px solid #bdcbd5;border-radius:6px;padding:7px 10px;background:white;color:inherit;cursor:pointer}
+button.primary{background:#245e7c;color:white;border-color:#245e7c}label{display:flex;gap:5px;align-items:center}#stage{position:relative;height:min(70vh,800px);min-height:380px}canvas{display:block;width:100%;height:100%;touch-action:none}
+#loading,#error{position:absolute;inset:0;display:grid;place-content:center;text-align:center;padding:24px;background:#eef2f5}#error[hidden],#loading[hidden]{display:none}
+footer{padding:12px 24px;background:white}#scrub{width:100%;accent-color:#286784}#status{font-variant-numeric:tabular-nums;min-width:220px}.hint{color:#617385;font-size:13px}.video-links:empty{display:none}.video-links a{margin-right:14px}
+</style>
+<header>
+<a href="../index.html">← All scenes</a><h1>__SCENE_TITLE__</h1>
+<div class="toolbar"><label id="motion-picker">Sequence <select id="motion"></select></label><span id="motion-caption" hidden></span><button class="primary" id="play">Play</button><button id="previous" title="Previous frame">−1 frame</button><button id="next" title="Next frame">+1 frame</button><label>Speed <select id="speed"><option value=".25">0.25×</option><option value=".5">0.5×</option><option value="1" selected>1×</option><option value="2">2×</option></select></label><span id="status"></span></div>
+<div class="toolbar"><button id="room">Room view</button><button id="follow">Follow human</button><button id="worst">Max-overlap frame</button><label><input id="walls" type="checkbox" checked>Walls / doors</label><label><input id="path" type="checkbox">Show paths</label><span id="quality" class="hint"></span></div>
+</header>
+<div id="stage"><canvas id="canvas" aria-label="Interactive room and animated human mesh"></canvas><div id="loading">Loading the room and fitted motion…</div><div id="error" hidden></div></div>
+<footer><input id="scrub" type="range" min="0" max="1" value="0" step="1" aria-label="Motion frame"><p class="hint">Drag to orbit · Shift-drag or right-drag to pan · Scroll to zoom · Space to play/pause · Arrow keys to step. The ceiling is hidden; walls can be toggled for inspection. Each sequence is shown independently.</p><div id="videos" class="video-links"></div></footer>
+<script id="data" type="application/json">__SCENE_DATA__</script>
+<script src="videos.js"></script>
+<script>
+"use strict";
+(()=>{
+const data=JSON.parse(document.getElementById('data').textContent), $=id=>document.getElementById(id);
+const canvas=$('canvas'),gl=canvas.getContext('webgl2',{antialias:true,alpha:false,preserveDrawingBuffer:true});
+function fail(message){$('loading').hidden=true;$('error').hidden=false;$('error').textContent=message;window.renderError=message}
+if(!gl){fail('This viewer needs WebGL 2. Open this file in Chrome or Firefox with graphics acceleration enabled.');return}
+try{
+function decode(text,Type){const bytes=Uint8Array.from(atob(text),c=>c.charCodeAt(0));return new Type(bytes.buffer)}
+function shader(kind,source){const s=gl.createShader(kind);gl.shaderSource(s,source);gl.compileShader(s);if(!gl.getShaderParameter(s,gl.COMPILE_STATUS))throw Error(gl.getShaderInfoLog(s));return s}
+const vertex=`#version 300 es
+layout(location=0) in vec3 position;layout(location=1) in vec3 normal;layout(location=2) in vec3 color;
+uniform mat4 vp;out vec3 n;out vec3 c;void main(){n=normal;c=color;gl_Position=vp*vec4(position,1.);}`;
+const fragment=`#version 300 es
+precision highp float;in vec3 n;in vec3 c;uniform bool unlit;out vec4 outColor;
+void main(){vec3 N=normalize(n);if(!gl_FrontFacing)N=-N;float light=.60+.32*max(dot(N,normalize(vec3(-.4,-.5,1.))),0.)+.08*max(dot(N,normalize(vec3(.8,.3,.5))),0.);outColor=vec4(unlit?c:pow(pow(c,vec3(2.2))*light,vec3(1./2.2)),1.);}`;
+const program=gl.createProgram();gl.attachShader(program,shader(gl.VERTEX_SHADER,vertex));gl.attachShader(program,shader(gl.FRAGMENT_SHADER,fragment));gl.linkProgram(program);if(!gl.getProgramParameter(program,gl.LINK_STATUS))throw Error(gl.getProgramInfoLog(program));gl.useProgram(program);
+const vpLocation=gl.getUniformLocation(program,'vp'),unlitLocation=gl.getUniformLocation(program,'unlit');
+gl.enable(gl.DEPTH_TEST);gl.disable(gl.CULL_FACE);gl.clearColor(.94,.96,.98,1);
+function buffer(target,values,usage=gl.STATIC_DRAW){const b=gl.createBuffer();gl.bindBuffer(target,b);gl.bufferData(target,values,usage);return b}
+function mesh(positions,normals,indices,colors,kind,dynamic=false){
+ const vao=gl.createVertexArray();gl.bindVertexArray(vao);
+ const position=buffer(gl.ARRAY_BUFFER,positions,dynamic?gl.DYNAMIC_DRAW:gl.STATIC_DRAW);gl.enableVertexAttribArray(0);gl.vertexAttribPointer(0,3,gl.FLOAT,false,0,0);
+ const normal=buffer(gl.ARRAY_BUFFER,normals,dynamic?gl.DYNAMIC_DRAW:gl.STATIC_DRAW);gl.enableVertexAttribArray(1);gl.vertexAttribPointer(1,3,gl.FLOAT,false,0,0);
+ let color=null;if(colors){color=buffer(gl.ARRAY_BUFFER,colors);gl.enableVertexAttribArray(2);gl.vertexAttribPointer(2,3,gl.UNSIGNED_BYTE,true,0,0)}else gl.disableVertexAttribArray(2);
+ const index=buffer(gl.ELEMENT_ARRAY_BUFFER,indices);gl.bindVertexArray(null);
+ return {vao,position,normal,color,index,count:indices.length,kind};
+}
+const roomMeshes=data.meshes.map(m=>mesh(decode(m.positions,Float32Array),decode(m.normals,Float32Array),decode(m.indices,Uint32Array),decode(m.colors,Uint8Array),m.kind));
+const motions=data.motions.map(m=>({...m,positions:decode(m.positions,Float32Array),indices:decode(m.indices,Uint32Array),indices_per_frame:m.indices_per_frame?.map(x=>decode(x,Uint32Array))}));
+data.meshes=null;data.motions=null;$('data').remove();
+function normals(positions,indices){
+ const n=new Float32Array(positions.length);
+ for(let i=0;i<indices.length;i+=3){const a=indices[i]*3,b=indices[i+1]*3,c=indices[i+2]*3,
+  ux=positions[b]-positions[a],uy=positions[b+1]-positions[a+1],uz=positions[b+2]-positions[a+2],
+  vx=positions[c]-positions[a],vy=positions[c+1]-positions[a+1],vz=positions[c+2]-positions[a+2],
+  nx=uy*vz-uz*vy,ny=uz*vx-ux*vz,nz=ux*vy-uy*vx;
+  for(const j of [a,b,c]){n[j]+=nx;n[j+1]+=ny;n[j+2]+=nz}}
+ for(let i=0;i<n.length;i+=3){const length=Math.hypot(n[i],n[i+1],n[i+2])||1;n[i]/=length;n[i+1]/=length;n[i+2]/=length}return n;
+}
+function dispose(m){if(!m)return;for(const b of [m.position,m.normal,m.color,m.index])if(b)gl.deleteBuffer(b);gl.deleteVertexArray(m.vao)}
+let human=null,route=null,requested=null,motionIndex=0,frame=0,playing=false,accumulator=0,speed=1,dirty=true,bodyDirty=true,follow=false;
+const low=data.bounds[0],high=data.bounds[1],center=[(low[0]+high[0])/2,(low[1]+high[1])/2,.9];
+const radius=Math.max(2,Math.hypot(high[0]-low[0],high[1]-low[1],high[2]-low[2])/2);
+let yaw=-Math.PI/3,pitch=1.0,distance=radius/Math.sin(25*Math.PI/180)*1.05,pan=[0,0,0];
+const dot=(a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2],cross=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]],unit=v=>{let d=Math.hypot(...v)||1;return v.map(x=>x/d)};
+function multiply(a,b){const out=new Float32Array(16);for(let c=0;c<4;c++)for(let r=0;r<4;r++)for(let k=0;k<4;k++)out[c*4+r]+=a[k*4+r]*b[c*4+k];return out}
+function camera(){
+ const root=motions[motionIndex].roots[frame],target=(follow?[root[0],root[1],.9]:center).map((v,i)=>v+pan[i]);
+ const eye=[target[0]+distance*Math.cos(pitch)*Math.cos(yaw),target[1]+distance*Math.cos(pitch)*Math.sin(yaw),target[2]+distance*Math.sin(pitch)];
+ const z=unit(eye.map((v,i)=>v-target[i])),x=unit(cross([0,0,1],z)),y=cross(z,x);
+ const view=new Float32Array([x[0],y[0],z[0],0,x[1],y[1],z[1],0,x[2],y[2],z[2],0,-dot(x,eye),-dot(y,eye),-dot(z,eye),1]);
+ const near=.025,far=Math.max(200,radius*20),f=1/Math.tan(25*Math.PI/180),aspect=canvas.width/canvas.height;
+ const projection=new Float32Array([f/aspect,0,0,0,0,f,0,0,0,0,(far+near)/(near-far),-1,0,0,2*far*near/(near-far),0]);
+ return multiply(projection,view);
+}
+function line(points){const p=new Float32Array(points.length*3);points.forEach((q,i)=>{p[i*3]=q[0];p[i*3+1]=q[1];p[i*3+2]=.035});return mesh(p,new Float32Array(p.length).fill(1),Uint32Array.from(points.map((_,i)=>i)),null,'path')}
+function setFrame(value){const m=motions[motionIndex];frame=Math.max(0,Math.min(m.frames-1,Math.round(value)));accumulator=frame;dirty=bodyDirty=true;updateStatus()}
+function updateStatus(){const m=motions[motionIndex];$('scrub').value=frame;$('status').textContent=`Frame ${frame+1} / ${m.frames} · ${(frame/m.fps).toFixed(2)} s`;const shift=Math.hypot(...m.shift_xy_m)*100;$('quality').textContent=`Shift ${shift.toFixed(1)} cm · reported overlap ${(m.frame_overlap_m[frame]*100).toFixed(1)} cm`;$('play').textContent=playing?'Pause':'Play'}
+function choose(index){motionIndex=index;frame=0;accumulator=0;playing=true;dispose(human);human=null;dispose(route);dispose(requested);route=line(motions[index].roots);requested=null;$('scrub').max=motions[index].frames-1;$('motion').value=index;setFrame(0);$('videos').replaceChildren();
+ for(const entry of window.videoPreviews||[]){if(entry.motion===motions[index].name){const a=document.createElement('a');a.href=entry.file;a.textContent='Open rendered video';$('videos').append(a)}}
+}
+motions.forEach((m,i)=>{const option=document.createElement('option');option.value=i;option.textContent=`${i+1}. ${m.action}`;$('motion').append(option)});
+if(motions.length===1){$('motion-picker').hidden=true;$('motion-caption').hidden=false;$('motion-caption').textContent='Motion: '+motions[0].action}
+function drawMesh(m,color=[.94,.26,.10],mode=gl.TRIANGLES){gl.bindVertexArray(m.vao);if(!m.color)gl.vertexAttrib3f(2,...color);gl.drawElements(mode,m.count,gl.UNSIGNED_INT,0)}
+function render(){
+ const rect=canvas.getBoundingClientRect(),scale=Math.min(devicePixelRatio||1,2),w=Math.round(rect.width*scale),h=Math.round(rect.height*scale);
+ if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h}gl.viewport(0,0,w,h);
+ if(bodyDirty){const m=motions[motionIndex],size=m.vertices_per_frame*3,positions=m.positions.subarray(frame*size,(frame+1)*size),indices=m.indices_per_frame?m.indices_per_frame[frame]:m.indices,n=normals(positions,indices);
+  if(!human)human=mesh(positions,n,indices,null,'human',true);else{gl.bindBuffer(gl.ARRAY_BUFFER,human.position);gl.bufferData(gl.ARRAY_BUFFER,positions,gl.DYNAMIC_DRAW);gl.bindBuffer(gl.ARRAY_BUFFER,human.normal);gl.bufferData(gl.ARRAY_BUFFER,n,gl.DYNAMIC_DRAW);if(m.indices_per_frame){gl.bindVertexArray(human.vao);gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,human.index);gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,indices,gl.DYNAMIC_DRAW);human.count=indices.length;gl.bindVertexArray(null)}}bodyDirty=false;
+ }
+ gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.uniformMatrix4fv(vpLocation,false,camera());gl.uniform1i(unlitLocation,0);
+ for(const m of roomMeshes){if(!$('walls').checked&&['wall','window','door'].includes(m.kind))continue;drawMesh(m)}drawMesh(human);
+ if($('path').checked){gl.uniform1i(unlitLocation,1);drawMesh(route,[.05,.48,.68],gl.LINE_STRIP)}gl.bindVertexArray(null);dirty=false;
+ window.renderState={scene:data.name,motion:motionIndex,frame,frames:motions[motionIndex].frames,playing,follow,walls:$('walls').checked,paths:$('path').checked,glError:gl.getError(),width:w,height:h};
+}
+$('motion').onchange=e=>choose(+e.target.value);$('scrub').oninput=e=>{playing=false;setFrame(+e.target.value)};
+$('play').onclick=()=>{playing=!playing;dirty=true;updateStatus()};$('previous').onclick=()=>{playing=false;setFrame(frame-1)};$('next').onclick=()=>{playing=false;setFrame(frame+1)};
+$('speed').onchange=e=>speed=+e.target.value;$('worst').onclick=()=>{playing=false;setFrame(motions[motionIndex].worst_frame)};
+$('room').onclick=()=>{follow=false;pan=[0,0,0];yaw=-Math.PI/3;pitch=1.0;distance=radius/Math.sin(25*Math.PI/180)*1.05;dirty=true};
+$('follow').onclick=()=>{follow=true;pan=[0,0,0];distance=4.3;pitch=.8;const root=motions[motionIndex].roots[frame];yaw=Math.atan2(center[1]-root[1],center[0]-root[0]);dirty=true};
+$('walls').onchange=$('path').onchange=()=>dirty=true;window.onresize=()=>dirty=true;
+let pointer=null;canvas.oncontextmenu=e=>e.preventDefault();canvas.onpointerdown=e=>{pointer={x:e.clientX,y:e.clientY,pan:e.shiftKey||e.button===2};canvas.setPointerCapture(e.pointerId)};
+canvas.onpointermove=e=>{if(!pointer)return;const dx=e.clientX-pointer.x,dy=e.clientY-pointer.y;if(pointer.pan){const amount=distance*.0015;pan[0]+=(-Math.sin(yaw)*dx-Math.cos(yaw)*dy)*amount;pan[1]+=(Math.cos(yaw)*dx-Math.sin(yaw)*dy)*amount}else{yaw-=dx*.006;pitch=Math.max(.08,Math.min(1.52,pitch+dy*.006))}pointer.x=e.clientX;pointer.y=e.clientY;dirty=true};canvas.onpointerup=canvas.onpointercancel=()=>pointer=null;
+canvas.addEventListener('wheel',e=>{e.preventDefault();distance=Math.max(.6,Math.min(radius*8,distance*Math.exp(e.deltaY*.001)));dirty=true},{passive:false});
+window.addEventListener('keydown',e=>{if(['INPUT','SELECT'].includes(document.activeElement.tagName))return;if(e.code==='Space'){e.preventDefault();$('play').click()}if(e.code==='ArrowRight'){e.preventDefault();$('next').click()}if(e.code==='ArrowLeft'){e.preventDefault();$('previous').click()}});
+choose(0);$('loading').hidden=true;let last=performance.now();function animate(now){const dt=Math.max(0,Math.min((now-last)/1000,.2));last=now;if(playing){accumulator=(accumulator+dt*motions[motionIndex].fps*speed)%motions[motionIndex].frames;const next=Math.floor(accumulator);if(next!==frame){frame=next;dirty=bodyDirty=true;updateStatus()}}if(dirty)render();requestAnimationFrame(animate)}requestAnimationFrame(animate);
+window.waveverseViewer={setFrame,selectMotion:choose,render,getFramePositions:()=>{const m=motions[motionIndex],size=m.vertices_per_frame*3;return m.positions.subarray(frame*size,(frame+1)*size)}};
+}catch(error){console.error(error);fail('Could not load this scene: '+error.message)}
+})();
+</script>
+</html>

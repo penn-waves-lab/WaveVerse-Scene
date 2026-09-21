@@ -1,0 +1,20 @@
+{
+  "dataname": "t2m",
+  "nb_code": 512,
+  "code_dim": 512,
+  "output_emb_width": 512,
+  "down_t": 2,
+  "stride_t": 2,
+  "width": 512,
+  "depth": 3,
+  "dilation_growth_rate": 3,
+  "quantizer": "ema_reset",
+  "mu": 0.99,
+  "embed_dim_gpt": 512,
+  "clip_dim": 512,
+  "block_size": 165,
+  "num_layers": 4,
+  "n_head_gpt": 8,
+  "drop_out_rate": 0.1,
+  "ff_rate": 4
+}

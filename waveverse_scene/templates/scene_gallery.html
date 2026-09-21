@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>WaveVerse · Human motion in scenes</title>
+<style>
+*{box-sizing:border-box}body{font:16px system-ui;background:#eef2f5;color:#203348;max-width:1400px;margin:32px auto;padding:0 24px}
+header{margin-bottom:24px}h1{font-size:30px}p{line-height:1.5}a{color:#286784}h2{font-size:18px;margin:12px 0 8px}h2 a{color:inherit;text-decoration:none}
+.toolbar{display:flex;gap:12px;align-items:center}input{flex:1;min-width:0;padding:12px;border:1px solid #bac6d0;border-radius:7px;font:inherit}
+button,select{font:inherit;color:inherit;background:white;border:1px solid #bac6d0;border-radius:6px;padding:8px;cursor:pointer}
+main{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,380px),1fr));gap:18px}article{background:white;padding:14px;border:1px solid #d6dee5;border-radius:10px;min-width:0}
+[hidden]{display:none!important}video,img{width:100%;aspect-ratio:2/1;object-fit:contain;background:#e7edf2;border-radius:6px;display:block}
+.sequence{display:flex;align-items:center;gap:8px;margin-top:10px}.sequence select{flex:1;min-width:0;max-width:100%}.quality{font-size:13px;color:#586d80;margin:8px 0}.fallback{margin-top:8px}
+.motion-description{font-size:14px;line-height:1.5;margin:10px 0;overflow-wrap:anywhere}
+</style>
+<header>
+<h1>Human motion in the scene</h1>
+<p>__SCENE_COUNT__ scenes · __MOTION_COUNT__ motion sequences. __SEQUENCE_GUIDANCE__ Previews play automatically as you scroll. Open the 3D viewer to rotate the camera or inspect individual frames. Rooms with the largest recorded overlap are listed first. The ceiling is hidden for inspection.</p>
+<div class="toolbar"><input id="filter" placeholder="Find a room…" aria-label="Find a room"><button id="toggle" aria-pressed="false">Pause previews</button></div>
+</header>
+<main>__SCENE_CARDS__</main>
+<script>
+'use strict';
+const cards=Array.from(document.querySelectorAll('article'));
+const toggle=document.getElementById('toggle');let playing=true;
+function updateButton(){toggle.textContent=playing?'Pause previews':'Resume previews';toggle.setAttribute('aria-pressed',String(!playing))}
+function sync(card){
+ const video=card.querySelector('video');if(!video)return;
+ const active=playing&&card.visible&&!card.hidden&&!document.hidden;
+ video.autoplay=active;
+ if(!active){video.pause();return}
+ if(video.getAttribute('src')!==video.dataset.src){video.src=video.dataset.src;video.load()}
+ video.muted=true;
+ const attempt=video.play();if(attempt)attempt.catch(error=>{if(error.name==='NotAllowedError')card.querySelector('.fallback').hidden=false});
+}
+const observer=new IntersectionObserver(entries=>{for(const entry of entries){entry.target.visible=entry.isIntersecting;sync(entry.target)}},{threshold:.1});
+for(const card of cards){
+ card.visible=false;
+ const video=card.querySelector('video');
+ if(video){
+  video.muted=true;video.defaultMuted=true;
+  video.addEventListener('loadeddata',()=>sync(card));
+  video.addEventListener('playing',()=>{card.querySelector('.fallback').hidden=true});
+  card.querySelector('.fallback').onclick=()=>{playing=true;updateButton();sync(card)};
+  const select=card.querySelector('select');
+  if(select)select.onchange=()=>{video.pause();video.dataset.src=select.value;video.poster=select.selectedOptions[0].dataset.poster;card.querySelector('.motion-description span').textContent=select.selectedOptions[0].dataset.description;sync(card)};
+ }
+ observer.observe(card);
+}
+toggle.onclick=()=>{playing=!playing;updateButton();cards.forEach(sync)};
+document.getElementById('filter').oninput=event=>{
+ const query=event.target.value.trim().toLowerCase();
+ for(const card of cards){card.hidden=!card.dataset.search.includes(query);sync(card)}
+};
+document.addEventListener('visibilitychange',()=>cards.forEach(sync));
+</script>
+</html>
